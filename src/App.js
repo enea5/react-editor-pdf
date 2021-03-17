@@ -143,8 +143,7 @@ function App() {
     children: [{ text: "" }]
   }]);
 
-  const handleTextEditorClick = useCallback((e) => {
-    const targetId = e.source.id
+  const handleTextEditorClick = useCallback((targetId) => {
     const item = _.find(colData, { id: targetId });
     if (item) {
       setChooseItemId(item.id);
@@ -153,16 +152,11 @@ function App() {
   }, [colData])
 
   const handleUpdateChooseText = useCallback((value) => {
-    if (!chooseItemId) return;
-    setColData(d => d.map(item => item.id === chooseItemId ? { ...item, content: value } : item))
+    if (chooseItemId) {
+      setColData(d => d.map(item => item.id === chooseItemId ? { ...item, content: value } : item))
+    }
     setChooseInput(value)
-
   }, [chooseItemId])
-
-
-
-
-
   return (
     <div>
       <div className={appClasses.root}>
@@ -192,44 +186,30 @@ function App() {
             <Card variant="outlined">
               <CardContent id="pdfdiv" elevation={3} style={{ padding: '20px' }}>
                 <div>
-                  {chooseTab === TAB_STATE.EDIT_TAB_ID && (
-                    <Grid container spacing={3}>
-                      {colData.map((item) => (
-                        <Grid item xs={4} key={item.id}>
-                          <ReadOnly
-                            id={item.id}
-                            initialValue={item.content}
-                            onClick={handleTextEditorClick}
-                          />
-                        </Grid>
-                      ))}
+                  <Grid container spacing={3}>
+                    {colData.map((item) => (
+                      <Grid item xs={4} key={item.id} onClick={() => handleTextEditorClick(item.id)}>
+                        <ReadOnly
+                          initialValue={item.content}
+                          borderSize={(chooseTab === TAB_STATE.EDIT_TAB_ID) ? 1 : 0}
+                        />
+                      </Grid>
+                    ))}
+                    {chooseTab === TAB_STATE.EDIT_TAB_ID && (
                       <Grid item sm={12}>
                         <Button variant="contained" color="primary" href="#contained-buttons" onClick={addRowCount}>
                           <AddIcon></AddIcon>Add Column
                         </Button>
                       </Grid>
-                    </Grid>
-                  )}
-                  {chooseTab === TAB_STATE.HTML_TAB_ID && (
-                    <Grid container spacing={3}>
-                      {colData.map((item) => (
-                        <Grid item xs={4} key={item.id}>
-                          <p >
-                            {item.content.split('\n').map((c, i) => (
-                              <React.Fragment key={i}>{c}<br /></React.Fragment>
-                            ))}
-                          </p>
-                        </Grid>
-                      ))}
-                    </Grid>
-                  )}
+                    )}
+                  </Grid>
                 </div>
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={3} spacing={3} style={{ padding: '20px' }}>
-            <Paper elevation={3} >
-              <RichEditor value={chooseInput} setValue={handleUpdateChooseText} ></RichEditor>
+            <Paper elevation={3}>
+              {!!chooseItemId && <RichEditor value={chooseInput} setValue={handleUpdateChooseText} ></RichEditor>}
             </Paper>
           </Grid>
         </Grid>

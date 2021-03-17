@@ -5,12 +5,12 @@ import Box from "@material-ui/core/Box";
 
 import { Element, Leaf } from "./RichEditor";
 
-const ReadOnly = ({ initialValue }) => {
+const ReadOnly = ({ initialValue, borderSize = 0 }) => {
   const renderElement = useCallback(props => <Element {...props} />, []);
   const renderLeaf = useCallback(props => <Leaf {...props} />, []);
   const editor = useMemo(() => withReact(createEditor()), []);
   return (
-    <Box p={1} m={2} border={1}>
+    <Box p={1} m={2} border={borderSize}>
       <Slate editor={editor} value={initialValue}>
         <Editable
           readOnly
