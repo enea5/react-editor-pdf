@@ -4,7 +4,6 @@ import isHotkey from "is-hotkey";
 
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import RichEditor from './RichEditor';
 
 import { Editable, withReact, Slate, useSlate } from "slate-react";
 import { createEditor, Editor, Transforms } from "slate";
