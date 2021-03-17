@@ -1,6 +1,4 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import ReactDOMServer from "react-dom/server"
-import _ from 'lodash';
 import { uuid } from 'lodash-uuid';
 
 import jsPDF from 'jspdf';
@@ -22,11 +20,10 @@ import {
 import PictureAsPdf from '@material-ui/icons/PictureAsPdf';
 import SubjectOutlinedIcon from '@material-ui/icons/SubjectOutlined';
 import AddIcon from '@material-ui/icons/Add';
-
 import './App.css';
 
 
-const useAppbarStyles = makeStyles((theme) => ({
+const appbarStyles = makeStyles((theme) => ({
   root: {
     flexGrow: 1,
   },
@@ -38,7 +35,7 @@ const useAppbarStyles = makeStyles((theme) => ({
   },
 }));
 
-const useContentStyles = makeStyles((theme) => ({
+const contentStyles = makeStyles((theme) => ({
   root: {
     flexGrow: 1,
   },
@@ -62,11 +59,12 @@ function App() {
   }), [])
 
 
+
   const [colData, setColData] = useState([])
   const [chooseTab, setChooseTab] = useState(TAB_STATE.EDIT_TAB_ID)
 
-  const appClasses = useAppbarStyles();
-  const contentClasses = useContentStyles();
+  const appClasses = appbarStyles();
+  const contentClasses = contentStyles();
 
   const updateTextData = useCallback((e) => {
     const targetId = e.target.id;
@@ -91,47 +89,44 @@ function App() {
     setChooseTab(targetId);
   }, [chooseTab])
 
-
-
   const onPrintDocument = useCallback(() => {
     const input = document.getElementById('pdfdiv');
     html2canvas(input)
       .then((canvas) => {
         const imgWidth = 200;
-        const pageHeight = 290;
         const imgHeight = canvas.height * imgWidth / canvas.width;
-        const heightLeft = imgHeight;
         const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF('p', 'mm', 'a4')
         const position = 0;
         pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
         pdf.save("download.pdf");
       });
-  });
-  const useDownloadHTML = useCallback(() => {
+  }, []);
 
+  const onDownloadHTML = useCallback(() => {
     const doc = document.implementation.createHTMLDocument("DownloadDoc");
     const styles = document.getElementsByTagName('style');
     const newDiv = document.createElement('div');
     const newStyle = document.createElement('style');
     newDiv.innerHTML = document.getElementById('pdfdiv').innerHTML;
 
-    let styleStr = ''
-    for (let style of styles) {
-      styleStr += style.innerHTML;
+    let styleContent = '';
+    for (const style of styles) {
+      styleContent += style.innerHTML;
     }
 
-    console.log(styleStr);
-    newStyle.style.cssText = styleStr;
-
+    newStyle.innerHTML = styleContent;
     doc.head.appendChild(newStyle);
     doc.body.appendChild(newDiv);
+
     const tempEl = document.createElement('a');
-    tempEl.href = 'data:attachment/text,' + encodeURI(doc.documentElement.innerHTML);
+    tempEl.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(doc.documentElement.innerHTML);
     tempEl.target = '_blank';
-    tempEl.download = 'thispage.html';
+    tempEl.download = 'page.html';
     tempEl.click();
-  }, [])
+  }, []);
+
+
 
   return (
     <div>
@@ -148,7 +143,7 @@ function App() {
             <IconButton color="inherit" aria-label="menu" onClick={onPrintDocument} disabled={chooseTab !== TAB_STATE.HTML_TAB_ID}>
               <PictureAsPdf />
             </IconButton>
-            <IconButton color="inherit" aria-label="menu" onClick={useDownloadHTML} disabled={chooseTab !== TAB_STATE.HTML_TAB_ID}>
+            <IconButton color="inherit" aria-label="menu" onClick={onDownloadHTML} disabled={chooseTab !== TAB_STATE.HTML_TAB_ID}>
               <SubjectOutlinedIcon />
             </IconButton>
           </Toolbar>
