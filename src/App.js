@@ -108,8 +108,29 @@ function App() {
         pdf.save("download.pdf");
       });
   });
-  const useDownloadHTML = useCallback((children) => {
-    ReactDOMServer.renderToStaticMarkup(<>{children}</>)
+  const useDownloadHTML = useCallback(() => {
+
+    const doc = document.implementation.createHTMLDocument("DownloadDoc");
+    const styles = document.getElementsByTagName('style');
+    const newDiv = document.createElement('div');
+    const newStyle = document.createElement('style');
+    newDiv.innerHTML = document.getElementById('pdfdiv').innerHTML;
+
+    let styleStr = ''
+    for (let style of styles) {
+      styleStr += style.innerHTML;
+    }
+
+    console.log(styleStr);
+    newStyle.style.cssText = styleStr;
+
+    doc.head.appendChild(newStyle);
+    doc.body.appendChild(newDiv);
+    const tempEl = document.createElement('a');
+    tempEl.href = 'data:attachment/text,' + encodeURI(doc.documentElement.innerHTML);
+    tempEl.target = '_blank';
+    tempEl.download = 'thispage.html';
+    tempEl.click();
   }, [])
 
   return (
@@ -127,7 +148,7 @@ function App() {
             <IconButton color="inherit" aria-label="menu" onClick={onPrintDocument} disabled={chooseTab !== TAB_STATE.HTML_TAB_ID}>
               <PictureAsPdf />
             </IconButton>
-            <IconButton color="inherit" aria-label="menu" onClick={onPrintDocument} disabled={chooseTab !== TAB_STATE.HTML_TAB_ID}>
+            <IconButton color="inherit" aria-label="menu" onClick={useDownloadHTML} disabled={chooseTab !== TAB_STATE.HTML_TAB_ID}>
               <SubjectOutlinedIcon />
             </IconButton>
           </Toolbar>
