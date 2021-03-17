@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { uuid } from 'lodash-uuid';
+import _ from 'lodash';
 
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -14,13 +15,18 @@ import {
   Button,
   Grid,
   TextField,
-  ButtonGroup
+  ButtonGroup,
+  Paper
 } from '@material-ui/core';
+import Card from '@material-ui/core/Card';
+import CardContent from '@material-ui/core/CardContent';
 // Material UI
 import PictureAsPdf from '@material-ui/icons/PictureAsPdf';
 import SubjectOutlinedIcon from '@material-ui/icons/SubjectOutlined';
 import AddIcon from '@material-ui/icons/Add';
 import './App.css';
+import RichEditor from 'components/RichEditor';
+import ReadOnly from 'components/ReadOnly';
 
 
 const appbarStyles = makeStyles((theme) => ({
@@ -38,15 +44,16 @@ const appbarStyles = makeStyles((theme) => ({
 const contentStyles = makeStyles((theme) => ({
   root: {
     flexGrow: 1,
+    paddingTop: '40px'
   },
   textfield: {
-    padding: theme.spacing(2),
     width: '100%',
     color: theme.palette.text.secondary,
   },
   colunmnButton: {
     color: theme.palette.text.primary,
-  }
+  },
+  spacing: 4
 }));
 
 
@@ -66,21 +73,25 @@ function App() {
   const appClasses = appbarStyles();
   const contentClasses = contentStyles();
 
-  const updateTextData = useCallback((e) => {
-    const targetId = e.target.id;
-    setColData(d => d.map(item => item.id === targetId ? { ...item, content: e.target.value } : item))
-  }, [])
-
   const addRowCount = useCallback((e) => {
     setColData(d => [...d, {
       id: uuid(),
-      content: ""
+      content: [{
+        type: "paragraph",
+        children: [{ text: "" }]
+      }]
     }, {
       id: uuid(),
-      content: ""
+      content: [{
+        type: "paragraph",
+        children: [{ text: "" }]
+      }]
     }, {
       id: uuid(),
-      content: ""
+      content: [{
+        type: "paragraph",
+        children: [{ text: "" }]
+      }]
     }]);
   }, [])
 
@@ -125,6 +136,30 @@ function App() {
     tempEl.download = 'page.html';
     tempEl.click();
   }, []);
+  //  choose handle
+  const [chooseItemId, setChooseItemId] = useState('')
+  const [chooseInput, setChooseInput] = useState([{
+    type: "paragraph",
+    children: [{ text: "" }]
+  }]);
+
+  const handleTextEditorClick = useCallback((e) => {
+    const targetId = e.source.id
+    const item = _.find(colData, { id: targetId });
+    if (item) {
+      setChooseItemId(item.id);
+      setChooseInput(item.content)
+    }
+  }, [colData])
+
+  const handleUpdateChooseText = useCallback((value) => {
+    if (!chooseItemId) return;
+    setColData(d => d.map(item => item.id === chooseItemId ? { ...item, content: value } : item))
+    setChooseInput(value)
+
+  }, [chooseItemId])
+
+
 
 
 
@@ -150,45 +185,56 @@ function App() {
         </AppBar>
       </div>
 
-      <Container key={chooseTab} id="pdfdiv">
-        <div className={contentClasses.root} >
-          {chooseTab === TAB_STATE.EDIT_TAB_ID && (
-            <Grid container spacing={3}>
-              {colData.map((item) => (
-                <Grid item xs={4} key={item.id}>
-                  <TextField
-                    id={item.id}
-                    placeholder="input the text"
-                    className={contentClasses.textfield}
-                    value={item.content}
-                    onChange={updateTextData}
-                    multiline
-                  />
-                </Grid>
-              ))}
-              <Grid item sm={12}>
-                <Button variant="contained" color="primary" href="#contained-buttons" onClick={addRowCount}>
-                  <AddIcon></AddIcon>Add Column
-                </Button>
-              </Grid>
-            </Grid>
-          )}
-          {chooseTab === TAB_STATE.HTML_TAB_ID && (
-            <Grid container spacing={3}>
-              {colData.map((item) => (
-                <Grid item xs={4} key={item.id}>
-                  <p >
-                    {item.content.split('\n').map((c, i) => (
-                      <React.Fragment key={i}>{c}<br /></React.Fragment>
-                    ))}
-                  </p>
-                </Grid>
-              ))}
-            </Grid>
-          )}
-        </div>
+      <Container className={contentClasses.root}>
+        <Grid container spacing={2}>
+
+          <Grid item xs={9} spacing={2}>
+            <Card variant="outlined">
+              <CardContent id="pdfdiv" elevation={3} style={{ padding: '20px' }}>
+                <div>
+                  {chooseTab === TAB_STATE.EDIT_TAB_ID && (
+                    <Grid container spacing={3}>
+                      {colData.map((item) => (
+                        <Grid item xs={4} key={item.id}>
+                          <ReadOnly
+                            id={item.id}
+                            initialValue={item.content}
+                            onClick={handleTextEditorClick}
+                          />
+                        </Grid>
+                      ))}
+                      <Grid item sm={12}>
+                        <Button variant="contained" color="primary" href="#contained-buttons" onClick={addRowCount}>
+                          <AddIcon></AddIcon>Add Column
+                        </Button>
+                      </Grid>
+                    </Grid>
+                  )}
+                  {chooseTab === TAB_STATE.HTML_TAB_ID && (
+                    <Grid container spacing={3}>
+                      {colData.map((item) => (
+                        <Grid item xs={4} key={item.id}>
+                          <p >
+                            {item.content.split('\n').map((c, i) => (
+                              <React.Fragment key={i}>{c}<br /></React.Fragment>
+                            ))}
+                          </p>
+                        </Grid>
+                      ))}
+                    </Grid>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={3} spacing={3} style={{ padding: '20px' }}>
+            <Paper elevation={3} >
+              <RichEditor value={chooseInput} setValue={handleUpdateChooseText} ></RichEditor>
+            </Paper>
+          </Grid>
+        </Grid>
       </Container>
-    </div>
+    </div >
   );
 }
 
